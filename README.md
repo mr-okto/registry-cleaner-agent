@@ -1,0 +1,2 @@
+# qoollo-registry-cleaner-agent
+
