@@ -40,13 +40,7 @@ func (a *Agent) configureRouter() error {
 	if err != nil {
 		return err
 	}
-	a.router.HandleFunc("/hello", a.handleHello())
-	a.router.PathPrefix("/").HandlerFunc(registryApiHandler.Proxy)
+	a.router.HandleFunc("/v2/status", registryApiHandler.StatusHandler)
+	a.router.PathPrefix("/").HandlerFunc(registryApiHandler.ProxyHandler)
 	return nil
-}
-
-func (a *Agent) handleHello() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello"))
-	}
 }
