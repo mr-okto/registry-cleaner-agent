@@ -4,7 +4,7 @@ import (
 	"flag"
 	"github.com/BurntSushi/toml"
 	"log"
-	"qoollo-registry-cleaner-agent/internal/app/agent"
+	"registry-cleaner-agent/internal/app/agent"
 )
 
 var (

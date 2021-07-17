@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
-	"qoollo-registry-cleaner-agent/internal/pkg/registry_api"
+	"registry-cleaner-agent/internal/pkg/registry_api"
 )
 
 type Agent struct {

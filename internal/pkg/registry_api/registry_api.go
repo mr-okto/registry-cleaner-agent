@@ -6,7 +6,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"path"
-	"qoollo-registry-cleaner-agent/internal/pkg/status"
+	"registry-cleaner-agent/internal/pkg/status"
 )
 
 type RegistryApiHandler struct {

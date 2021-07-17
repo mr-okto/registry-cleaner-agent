@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson727fe99aDecodeQoolloRegistryCleanerAgentInternalPkgStatus(in *jlexer.Lexer, out *Status) {
+func easyjson727fe99aDecodeRegistryCleanerAgentInternalPkgStatus(in *jlexer.Lexer, out *Status) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -54,7 +54,7 @@ func easyjson727fe99aDecodeQoolloRegistryCleanerAgentInternalPkgStatus(in *jlexe
 		in.Consumed()
 	}
 }
-func easyjson727fe99aEncodeQoolloRegistryCleanerAgentInternalPkgStatus(out *jwriter.Writer, in Status) {
+func easyjson727fe99aEncodeRegistryCleanerAgentInternalPkgStatus(out *jwriter.Writer, in Status) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -84,23 +84,23 @@ func easyjson727fe99aEncodeQoolloRegistryCleanerAgentInternalPkgStatus(out *jwri
 // MarshalJSON supports json.Marshaler interface
 func (v Status) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson727fe99aEncodeQoolloRegistryCleanerAgentInternalPkgStatus(&w, v)
+	easyjson727fe99aEncodeRegistryCleanerAgentInternalPkgStatus(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Status) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson727fe99aEncodeQoolloRegistryCleanerAgentInternalPkgStatus(w, v)
+	easyjson727fe99aEncodeRegistryCleanerAgentInternalPkgStatus(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Status) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson727fe99aDecodeQoolloRegistryCleanerAgentInternalPkgStatus(&r, v)
+	easyjson727fe99aDecodeRegistryCleanerAgentInternalPkgStatus(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Status) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson727fe99aDecodeQoolloRegistryCleanerAgentInternalPkgStatus(l, v)
+	easyjson727fe99aDecodeRegistryCleanerAgentInternalPkgStatus(l, v)
 }

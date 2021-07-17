@@ -1,4 +1,4 @@
-module qoollo-registry-cleaner-agent
+module registry-cleaner-agent
 
 go 1.16
 
