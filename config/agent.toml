@@ -1,6 +1,6 @@
 bind_addr = ":3000"
 bitcask_storage_path = "bitcask-storage"
 gc_schedule = "0 0 3 * * ?"
-registry_api_url = "http://cleaner.qoollo.com:5555"
+registry_api_url = "http://localhost:5555"
 registry_container_name = "registry"
 registry_root_dir = "/var/lib/registry"
