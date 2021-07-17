@@ -1,8 +1,10 @@
 package agent
 
 import (
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"net/http"
+	"os"
 	"qoollo-registry-cleaner-agent/internal/pkg/registry_api"
 )
 
@@ -23,7 +25,7 @@ func (a *Agent) Start() error {
 	if err != nil {
 		return err
 	}
-	return http.ListenAndServe(a.config.BindAddr, a.router)
+	return http.ListenAndServe(a.config.BindAddr, handlers.RecoveryHandler()(a.router))
 }
 
 func (a *Agent) initHandlers() (*registry_api.RegistryApiHandler, error) {
@@ -39,6 +41,7 @@ func (a *Agent) configureRouter() error {
 	if err != nil {
 		return err
 	}
+	a.router.Use(func(next http.Handler) http.Handler { return handlers.CombinedLoggingHandler(os.Stdout, next) })
 	a.router.HandleFunc("/v2/status", registryApiHandler.StatusHandler)
 	a.router.PathPrefix("/").HandlerFunc(registryApiHandler.ProxyHandler)
 	return nil
