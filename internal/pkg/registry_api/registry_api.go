@@ -10,19 +10,27 @@ import (
 )
 
 type RegistryApiHandler struct {
-	ApiUrl   *url.URL
-	rootPath string
+	ApiUrl  *url.URL
+	Status  *status.Status
+	Storage *status.Storage
 }
 
-func New(apiUrl string) *RegistryApiHandler {
+func Init(apiUrl string, storagePath string) (*RegistryApiHandler, error) {
 	parsedUrl, err := url.Parse(apiUrl)
 	if err != nil {
-		return nil
+		return nil, err
+	}
+	stat := status.New()
+	storage := status.Storage{Path: storagePath}
+	err = stat.Restore(&storage)
+	if err != nil {
+		return nil, err
 	}
 	return &RegistryApiHandler{
-		ApiUrl:   parsedUrl,
-		rootPath: parsedUrl.Path,
-	}
+		ApiUrl:  parsedUrl,
+		Status:  stat,
+		Storage: &storage,
+	}, nil
 }
 
 func (rah *RegistryApiHandler) ProxyHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,11 +53,9 @@ func (rah *RegistryApiHandler) StatusHandler(w http.ResponseWriter, _ *http.Requ
 	}
 	healthUrl.Path = path.Join(rah.ApiUrl.Path, "/v2/")
 
-	// TODO: save and restore timestamps
-	st := status.New()
 	resp, err := http.Get(healthUrl.String())
-	st.IsAlive = err == nil && resp.StatusCode == 200
-	res, err := json.Marshal(&st)
+	rah.Status.IsAlive = err == nil && resp.StatusCode == 200
+	res, err := json.Marshal(&rah.Status)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

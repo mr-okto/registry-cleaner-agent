@@ -1,6 +1,9 @@
 package status
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 //easyjson:json
 type Status struct {
@@ -17,4 +20,26 @@ func New() *Status {
 		BlobsCleanedAt: time.RFC3339,
 		BlobsIndexedAt: time.RFC3339,
 	}
+}
+
+func (s *Status) Restore(store *Storage) error {
+	val, err := store.GetValue(KeyUnusedBlobs, []byte(strconv.Itoa(s.UnusedBlobs)))
+	if err != nil {
+		return err
+	}
+	s.UnusedBlobs, err = strconv.Atoi(string(val))
+	if err != nil {
+		return err
+	}
+	val, err = store.GetValue(KeyIndexedAt, []byte(s.BlobsIndexedAt))
+	if err != nil {
+		return err
+	}
+	s.BlobsIndexedAt = string(val)
+	val, err = store.GetValue(KeyCleanedAt, []byte(s.BlobsCleanedAt))
+	if err != nil {
+		return err
+	}
+	s.BlobsCleanedAt = string(val)
+	return nil
 }
