@@ -20,3 +20,6 @@ build/*
 # IDE
 .idea
 .ide
+
+#Local storage path
+bitcask-storage

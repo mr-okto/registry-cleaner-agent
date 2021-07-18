@@ -4,7 +4,7 @@ import (
 	"flag"
 	"github.com/BurntSushi/toml"
 	"log"
-	"qoollo-registry-cleaner-agent/internal/app/agent"
+	"registry-cleaner-agent/internal/app/agent"
 )
 
 var (
@@ -14,7 +14,7 @@ var (
 func init() {
 	flag.StringVar(&configPath,
 		"config",
-		"config/apiserver.toml",
+		"config/agent.toml",
 		"path to config file")
 }
 
