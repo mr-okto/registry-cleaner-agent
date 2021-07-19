@@ -4,11 +4,11 @@ variables:
   GIT_CLONE_PATH: '$CI_BUILDS_DIR/$CI_PROJECT_NAME'
 build:
  stage: build
-  script: 
-    - sudo chown -R devops:devops /home/download/qoollo-registry-cleaner-agent/
-    - go build -o build/agent -v ./cmd
-    - echo "Готово"
-  only:
-    - dev
-  tags:
-    - agent-runner
+script: 
+  - sudo chown -R devops:devops /home/download/qoollo-registry-cleaner-agent/
+  - go build -o build/agent -v ./cmd
+  - echo "Готово"
+only:
+  - dev
+tags:
+  - agent-runner
