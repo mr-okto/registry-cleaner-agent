@@ -50,7 +50,8 @@ func (a *Agent) configureRouter() error {
 	a.router.HandleFunc("/v2/status", registryApiHandler.StatusHandler)
 	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.MafifestSummaryHandler)
 
-	a.router.HandleFunc("/v2/garbage", gc.GarbageHandler)
+	a.router.HandleFunc("/v2/garbage", gc.GarbageHandler).Methods("GET")
+	a.router.HandleFunc("/v2/garbage", gc.GarbageDeleteHandler).Methods("DELETE")
 
 	a.router.PathPrefix("/").HandlerFunc(registryApiHandler.ProxyHandler)
 	return nil

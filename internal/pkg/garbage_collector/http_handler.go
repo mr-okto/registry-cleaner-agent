@@ -7,7 +7,7 @@ import (
 )
 
 func (gc *GarbageCollector) GarbageHandler(w http.ResponseWriter, _ *http.Request) {
-	blobs, err := gc.ListGarbageBlobs()
+	blobs, err := gc.ListGarbageBlobs() // TODO: update status index
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -27,4 +27,13 @@ func (gc *GarbageCollector) GarbageHandler(w http.ResponseWriter, _ *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(res)
+}
+
+func (gc *GarbageCollector) GarbageDeleteHandler(w http.ResponseWriter, _ *http.Request) {
+	err := gc.RemoveGarbageBlobs() // TODO: update status
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
