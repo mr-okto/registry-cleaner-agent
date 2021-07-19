@@ -43,6 +43,8 @@ func (a *Agent) configureRouter() error {
 	}
 	a.router.Use(func(next http.Handler) http.Handler { return handlers.CombinedLoggingHandler(os.Stdout, next) })
 	a.router.HandleFunc("/v2/status", registryApiHandler.StatusHandler)
+	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.MafifestSummaryHandler)
+
 	a.router.PathPrefix("/").HandlerFunc(registryApiHandler.ProxyHandler)
 	return nil
 }
