@@ -5,7 +5,7 @@ variables:
 build:
   stage: build
   script: 
-    - sudo chown -R devops:devops /home/download/qoollo-registry-cleaner-agent/
+    - sudo chown -R gitlab-runner:gitlab-runner /home/download/qoollo-registry-cleaner-agent/
     - go build -o build/agent -v ./cmd
     - echo "Готово"
   only:
