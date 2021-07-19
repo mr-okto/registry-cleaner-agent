@@ -3,6 +3,7 @@ package agent
 import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"net/http"
 	"os"
 	"registry-cleaner-agent/internal/pkg/garbage_collector"
@@ -26,7 +27,13 @@ func (a *Agent) Start() error {
 	if err != nil {
 		return err
 	}
-	return http.ListenAndServe(a.config.BindAddr, handlers.RecoveryHandler()(a.router))
+	c := cors.New(cors.Options{
+		// INSECURE!
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+	})
+	return http.ListenAndServe(a.config.BindAddr, handlers.RecoveryHandler()(c.Handler(a.router)))
 }
 
 func (a *Agent) initHandlers() (*registry_api.RegistryApiHandler, *garbage_collector.GarbageCollector, error) {

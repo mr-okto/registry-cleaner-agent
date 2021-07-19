@@ -15,5 +15,6 @@ require (
 	github.com/mailru/easyjson v0.7.7
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/rs/cors v1.8.0
 	github.com/tidwall/gjson v1.8.1
 )
