@@ -56,6 +56,10 @@ func (gc *GarbageCollector) RemoveGarbageBlobs() error {
 	if err != nil {
 		return err
 	}
+	err = exec.Command("docker", "restart", gc.ContainerName).Run()
+	if err != nil {
+		return err
+	}
 	sc := bufio.NewScanner(bytes.NewReader(out))
 	for sc.Scan() {
 		line := sc.Text()
