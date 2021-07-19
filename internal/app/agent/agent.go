@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
+	"registry-cleaner-agent/internal/pkg/garbage_collector"
 	"registry-cleaner-agent/internal/pkg/registry_api"
 )
 
@@ -28,22 +29,28 @@ func (a *Agent) Start() error {
 	return http.ListenAndServe(a.config.BindAddr, handlers.RecoveryHandler()(a.router))
 }
 
-func (a *Agent) initHandlers() (*registry_api.RegistryApiHandler, error) {
+func (a *Agent) initHandlers() (*registry_api.RegistryApiHandler, *garbage_collector.GarbageCollector, error) {
 	rah, err := registry_api.Init(a.config.ApiUrl, a.config.BitCaskStoragePath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return rah, nil
+	gc := &garbage_collector.GarbageCollector{
+		ContainerName:      a.config.ContainerName,
+		RegistryConfigPath: a.config.RegistryConfig,
+	}
+	return rah, gc, nil
 }
 
 func (a *Agent) configureRouter() error {
-	registryApiHandler, err := a.initHandlers()
+	registryApiHandler, gc, err := a.initHandlers()
 	if err != nil {
 		return err
 	}
 	a.router.Use(func(next http.Handler) http.Handler { return handlers.CombinedLoggingHandler(os.Stdout, next) })
 	a.router.HandleFunc("/v2/status", registryApiHandler.StatusHandler)
 	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.MafifestSummaryHandler)
+
+	a.router.HandleFunc("/v2/garbage", gc.GarbageHandler)
 
 	a.router.PathPrefix("/").HandlerFunc(registryApiHandler.ProxyHandler)
 	return nil
