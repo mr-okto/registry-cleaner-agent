@@ -43,11 +43,11 @@ func (m *Manager) restoreStatus() error {
 		return err
 	}
 	m.Status.BlobsCleanedAt = string(val)
-	val, err = m.Storage.GetValue(KeyBlobsTotalSize, []byte(strconv.Itoa(m.Status.BlobsTotalSize)))
+	val, err = m.Storage.GetValue(KeyBlobsTotalSize, []byte(strconv.FormatInt(m.Status.BlobsTotalSize, 10)))
 	if err != nil {
 		return err
 	}
-	m.Status.BlobsTotalSize, err = strconv.Atoi(string(val))
+	m.Status.BlobsTotalSize, err = strconv.ParseInt(string(val), 10, 64)
 	return err
 }
 
@@ -86,12 +86,12 @@ func (m *Manager) SetBlobsIndexedAt(blobsIndexedAt time.Time) error {
 	return nil
 }
 
-func (m *Manager) SetBlobsTotalSize(blobsIndexedAt time.Time) error {
-	timeStr := blobsIndexedAt.Format(time.RFC3339)
-	err := m.Storage.SetValue(KeyIndexedAt, []byte(timeStr))
+func (m *Manager) SetBlobsTotalSize(blobsTotalSize int64) error {
+	err := m.Storage.SetValue(KeyIndexedAt,
+		[]byte(strconv.FormatInt(blobsTotalSize, 10)))
 	if err != nil {
 		return err
 	}
-	m.Status.BlobsIndexedAt = timeStr
+	m.Status.BlobsTotalSize = blobsTotalSize
 	return nil
 }

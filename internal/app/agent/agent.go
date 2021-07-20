@@ -6,6 +6,7 @@ import (
 	"github.com/rs/cors"
 	"net/http"
 	"os"
+	"registry-cleaner-agent/internal/pkg/fs_analyzer"
 	"registry-cleaner-agent/internal/pkg/garbage_collector"
 	"registry-cleaner-agent/internal/pkg/registry_api"
 	"registry-cleaner-agent/internal/pkg/status"
@@ -49,7 +50,8 @@ func (a *Agent) initHandlers() (*registry_api.RegistryApiHandler, *garbage_colle
 	}
 	gc := garbage_collector.NewGarbageCollector(
 		a.config.ContainerName, a.config.RegistryConfig)
-	gch, err := garbage_collector.InitGCHandler(gc, stm)
+	fsa := fs_analyzer.NewFSAnalyzer(a.config.RegistryMountPoint)
+	gch, err := garbage_collector.InitGCHandler(gc, stm, fsa)
 	if err != nil {
 		return nil, nil, err
 	}

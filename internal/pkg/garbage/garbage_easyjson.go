@@ -37,7 +37,7 @@ func easyjson5d95a6ebDecodeRegistryCleanerAgentInternalPkgGarbage(in *jlexer.Lex
 		}
 		switch key {
 		case "size":
-			out.Size = int(in.Int())
+			out.Size = int64(in.Int64())
 		case "digest":
 			out.Digest = string(in.String())
 		default:
@@ -57,7 +57,7 @@ func easyjson5d95a6ebEncodeRegistryCleanerAgentInternalPkgGarbage(out *jwriter.W
 	{
 		const prefix string = ",\"size\":"
 		out.RawString(prefix[1:])
-		out.Int(int(in.Size))
+		out.Int64(int64(in.Size))
 	}
 	{
 		const prefix string = ",\"digest\":"

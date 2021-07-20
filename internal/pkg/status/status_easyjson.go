@@ -45,7 +45,7 @@ func easyjson727fe99aDecodeRegistryCleanerAgentInternalPkgStatus(in *jlexer.Lexe
 		case "blobsIndexedAt":
 			out.BlobsIndexedAt = string(in.String())
 		case "blobsTotalSize":
-			out.BlobsTotalSize = int(in.Int())
+			out.BlobsTotalSize = int64(in.Int64())
 		default:
 			in.SkipRecursive()
 		}
@@ -83,7 +83,7 @@ func easyjson727fe99aEncodeRegistryCleanerAgentInternalPkgStatus(out *jwriter.Wr
 	{
 		const prefix string = ",\"blobsTotalSize\":"
 		out.RawString(prefix)
-		out.Int(int(in.BlobsTotalSize))
+		out.Int64(int64(in.BlobsTotalSize))
 	}
 	out.RawByte('}')
 }

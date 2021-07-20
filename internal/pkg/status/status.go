@@ -10,7 +10,7 @@ type Status struct {
 	UnusedBlobs    int    `json:"unusedBlobs"`
 	BlobsCleanedAt string `json:"blobsCleanedAt"`
 	BlobsIndexedAt string `json:"blobsIndexedAt"`
-	BlobsTotalSize int    `json:"blobsTotalSize"`
+	BlobsTotalSize int64  `json:"blobsTotalSize"`
 }
 
 func NewStatus() *Status {

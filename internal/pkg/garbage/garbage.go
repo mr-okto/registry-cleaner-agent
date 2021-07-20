@@ -2,7 +2,7 @@ package garbage
 
 //easyjson:json
 type GarbageBlob struct {
-	Size   int    `json:"size"`
+	Size   int64  `json:"size"`
 	Digest string `json:"digest"`
 }
 
