@@ -39,7 +39,7 @@ func GetManifestData(manifestUrl string, manifestTypeHeader string) (manifestDat
 func GetV1Manifest(manifestUrl string) (manifest *schema1.Manifest, apiResp *http.Response, err error) {
 	jsonManifestData, apiResp, err := GetManifestData(manifestUrl, schema1.MediaTypeManifest)
 	if err != nil {
-		return nil, nil, err
+		return nil, apiResp, err
 	}
 	manifest = &schema1.Manifest{}
 	err = json.Unmarshal(jsonManifestData, manifest)

@@ -6,5 +6,6 @@ type Config struct {
 	GCSchedule         string `toml:"gc_schedule"`
 	ApiUrl             string `toml:"registry_api_url"`
 	ContainerName      string `toml:"registry_container_name"`
-	RootDir            string `toml:"registry_root_dir"`
+	RegistryMountPoint string `toml:"registry_mount_point"`
+	RegistryConfig     string `toml:"registry_config_path"`
 }

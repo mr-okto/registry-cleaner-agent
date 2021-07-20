@@ -3,9 +3,13 @@ package agent
 import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"net/http"
 	"os"
+	"registry-cleaner-agent/internal/pkg/fs_analyzer"
+	"registry-cleaner-agent/internal/pkg/garbage_collector"
 	"registry-cleaner-agent/internal/pkg/registry_api"
+	"registry-cleaner-agent/internal/pkg/status"
 )
 
 type Agent struct {
@@ -25,25 +29,46 @@ func (a *Agent) Start() error {
 	if err != nil {
 		return err
 	}
-	return http.ListenAndServe(a.config.BindAddr, handlers.RecoveryHandler()(a.router))
+	c := cors.New(cors.Options{
+		// INSECURE!
+		// TODO: add allowedOrigins config
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+	})
+	return http.ListenAndServe(a.config.BindAddr, handlers.RecoveryHandler()(c.Handler(a.router)))
 }
 
-func (a *Agent) initHandlers() (*registry_api.RegistryApiHandler, error) {
-	rah, err := registry_api.Init(a.config.ApiUrl, a.config.BitCaskStoragePath)
+func (a *Agent) initHandlers() (*registry_api.RegistryApiHandler, *garbage_collector.GCHandler, error) {
+	stm, err := status.InitStatusManager(a.config.BitCaskStoragePath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return rah, nil
+	rah, err := registry_api.InitApiHandler(a.config.ApiUrl, stm)
+	if err != nil {
+		return nil, nil, err
+	}
+	gc := garbage_collector.NewGarbageCollector(
+		a.config.ContainerName, a.config.RegistryConfig)
+	fsa := fs_analyzer.NewFSAnalyzer(a.config.RegistryMountPoint)
+	gch, err := garbage_collector.InitGCHandler(gc, stm, fsa)
+	if err != nil {
+		return nil, nil, err
+	}
+	return rah, gch, nil
 }
 
 func (a *Agent) configureRouter() error {
-	registryApiHandler, err := a.initHandlers()
+	registryApiHandler, gch, err := a.initHandlers()
 	if err != nil {
 		return err
 	}
 	a.router.Use(func(next http.Handler) http.Handler { return handlers.CombinedLoggingHandler(os.Stdout, next) })
 	a.router.HandleFunc("/v2/status", registryApiHandler.StatusHandler)
-	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.MafifestSummaryHandler)
+	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.ManifestSummaryHandler)
+
+	a.router.HandleFunc("/v2/garbage", gch.GarbageGetHandler).Methods("GET")
+	a.router.HandleFunc("/v2/garbage", gch.GarbageDeleteHandler).Methods("DELETE")
 
 	a.router.PathPrefix("/").HandlerFunc(registryApiHandler.ProxyHandler)
 	return nil
