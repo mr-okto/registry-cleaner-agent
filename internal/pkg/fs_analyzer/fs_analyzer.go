@@ -11,7 +11,8 @@ type Analyzer struct {
 }
 
 const (
-	BlobsPath = "docker/registry/v2/blobs"
+	BlobsPath    = "docker/registry/v2/blobs"
+	BlobFilename = "data"
 )
 
 func NewFSAnalyzer(registryMntRoot string) *Analyzer {
@@ -25,7 +26,7 @@ func (a *Analyzer) GetBlobSize(digest string) (int64, error) {
 	digestType := digest[:sInd] // sha:
 	rawDigest := digest[sInd+1:]
 	prefix := rawDigest[:2] // two leading digest symbols
-	blobPath := path.Join(a.mntRoot, BlobsPath, digestType, prefix, rawDigest)
+	blobPath := path.Join(a.mntRoot, BlobsPath, digestType, prefix, rawDigest, BlobFilename)
 	blob, err := os.Stat(blobPath)
 	if err != nil {
 		return 0, err
