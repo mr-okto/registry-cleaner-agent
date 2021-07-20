@@ -2,10 +2,12 @@ package status
 
 import (
 	"git.mills.io/prologic/bitcask"
+	"sync"
 )
 
 type Storage struct {
 	Path string
+	mu   *sync.RWMutex
 }
 
 var (
@@ -19,11 +21,14 @@ var (
 func NewStorage(storagePath string) *Storage {
 	return &Storage{
 		Path: storagePath,
+		mu:   &sync.RWMutex{},
 	}
 }
 
 // GetValue TODO: separate functions to open and close Storage
 func (s *Storage) GetValue(key []byte, defaultValue []byte) ([]byte, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	db, err := bitcask.Open(s.Path)
 	if err != nil {
 		return nil, err
@@ -47,6 +52,8 @@ func (s *Storage) GetValue(key []byte, defaultValue []byte) ([]byte, error) {
 }
 
 func (s *Storage) SetValue(key []byte, value []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	db, err := bitcask.Open(s.Path)
 	if err != nil {
 		return err
