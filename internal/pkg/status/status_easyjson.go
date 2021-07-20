@@ -36,7 +36,7 @@ func easyjson727fe99aDecodeRegistryCleanerAgentInternalPkgStatus(in *jlexer.Lexe
 			continue
 		}
 		switch key {
-		case "alive":
+		case "isAlive":
 			out.IsAlive = bool(in.Bool())
 		case "unusedBlobs":
 			out.UnusedBlobs = int(in.Int())
@@ -44,6 +44,8 @@ func easyjson727fe99aDecodeRegistryCleanerAgentInternalPkgStatus(in *jlexer.Lexe
 			out.BlobsCleanedAt = string(in.String())
 		case "blobsIndexedAt":
 			out.BlobsIndexedAt = string(in.String())
+		case "blobsTotalSize":
+			out.BlobsTotalSize = int(in.Int())
 		default:
 			in.SkipRecursive()
 		}
@@ -59,7 +61,7 @@ func easyjson727fe99aEncodeRegistryCleanerAgentInternalPkgStatus(out *jwriter.Wr
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"alive\":"
+		const prefix string = ",\"isAlive\":"
 		out.RawString(prefix[1:])
 		out.Bool(bool(in.IsAlive))
 	}
@@ -77,6 +79,11 @@ func easyjson727fe99aEncodeRegistryCleanerAgentInternalPkgStatus(out *jwriter.Wr
 		const prefix string = ",\"blobsIndexedAt\":"
 		out.RawString(prefix)
 		out.String(string(in.BlobsIndexedAt))
+	}
+	{
+		const prefix string = ",\"blobsTotalSize\":"
+		out.RawString(prefix)
+		out.Int(int(in.BlobsTotalSize))
 	}
 	out.RawByte('}')
 }

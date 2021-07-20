@@ -14,26 +14,18 @@ import (
 )
 
 type RegistryApiHandler struct {
-	ApiUrl  *url.URL
-	Status  *status.Status
-	Storage *status.Storage
+	ApiUrl        *url.URL
+	StatusManager *status.Manager
 }
 
-func Init(apiUrl string, storagePath string) (*RegistryApiHandler, error) {
+func InitApiHandler(apiUrl string, statusManager *status.Manager) (*RegistryApiHandler, error) {
 	parsedUrl, err := url.Parse(apiUrl)
 	if err != nil {
 		return nil, err
 	}
-	stat := status.New()
-	storage := status.Storage{Path: storagePath}
-	err = stat.Restore(&storage)
-	if err != nil {
-		return nil, err
-	}
 	return &RegistryApiHandler{
-		ApiUrl:  parsedUrl,
-		Status:  stat,
-		Storage: &storage,
+		ApiUrl:        parsedUrl,
+		StatusManager: statusManager,
 	}, nil
 }
 
@@ -57,8 +49,8 @@ func (rah *RegistryApiHandler) StatusHandler(w http.ResponseWriter, _ *http.Requ
 	healthUrl.Path = path.Join(rah.ApiUrl.Path, "/v2/")
 
 	resp, err := http.Get(healthUrl.String())
-	rah.Status.IsAlive = err == nil && resp.StatusCode == 200
-	res, err := json.Marshal(&rah.Status)
+	rah.StatusManager.Status.IsAlive = err == nil && resp.StatusCode == 200
+	res, err := json.Marshal(rah.StatusManager.Status)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -68,7 +60,7 @@ func (rah *RegistryApiHandler) StatusHandler(w http.ResponseWriter, _ *http.Requ
 	_, _ = w.Write(res)
 }
 
-func (rah *RegistryApiHandler) MafifestSummaryHandler(w http.ResponseWriter, r *http.Request) {
+func (rah *RegistryApiHandler) ManifestSummaryHandler(w http.ResponseWriter, r *http.Request) {
 	manifestUrl := *rah.ApiUrl
 	manifestPath := strings.TrimSuffix(r.URL.Path, "/summary")
 	manifestUrl.Path = path.Join(manifestUrl.Path, manifestPath)
