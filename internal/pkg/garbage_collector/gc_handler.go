@@ -30,6 +30,11 @@ func (gch *GCHandler) GarbageGetHandler(w http.ResponseWriter, _ *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	err = gch.StatusManager.SetUnusedBlobs(len(blobs))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	err = gch.StatusManager.SetBlobsIndexedAt(time.Now())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -55,6 +60,11 @@ func (gch *GCHandler) GarbageGetHandler(w http.ResponseWriter, _ *http.Request) 
 func (gch *GCHandler) GarbageDeleteHandler(w http.ResponseWriter, _ *http.Request) {
 	currentTime := time.Now()
 	err := gch.Gc.RemoveGarbageBlobs()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = gch.StatusManager.SetUnusedBlobs(0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
