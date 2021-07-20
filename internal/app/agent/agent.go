@@ -30,9 +30,7 @@ func (a *Agent) Start() error {
 		return err
 	}
 	c := cors.New(cors.Options{
-		// INSECURE!
-		// TODO: add allowedOrigins config
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   a.config.CorsAllowedOrigins,
 		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 	})
