@@ -59,11 +59,10 @@ func (a *Agent) Run() {
 func (a *Agent) configureServer() {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := cors.New(cors.Options{
-		AllowedOrigins:   a.config.CorsAllowedOrigins,
-		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowCredentials: true,
-		AllowedHeaders:   a.config.CorsAllowedHeaders,
-		ExposedHeaders:   a.config.CorsExposedHeaders,
+		AllowedOrigins: a.config.CorsAllowedOrigins,
+		AllowedMethods: []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders: a.config.CorsAllowedHeaders,
+		ExposedHeaders: a.config.CorsExposedHeaders,
 	})
 	corsHandler := c.Handler(a.router)
 	a.server = &http.Server{
@@ -144,7 +143,8 @@ func (a *Agent) configureRouter() error {
 	}
 	a.router.Use(func(next http.Handler) http.Handler { return handlers.CombinedLoggingHandler(os.Stdout, next) })
 	a.router.HandleFunc("/v2/status", registryApiHandler.StatusHandler)
-	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.ManifestSummaryHandler)
+	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.ManifestSummaryHandler).Methods("GET")
+	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.ManifestSummaryHeadHandler).Methods("HEAD")
 
 	a.router.HandleFunc("/v2/garbage", gch.GarbageGetHandler).Methods("GET")
 	a.router.HandleFunc("/v2/garbage", gch.GarbageDeleteHandler).Methods("DELETE")

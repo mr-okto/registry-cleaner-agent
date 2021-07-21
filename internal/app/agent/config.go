@@ -4,7 +4,7 @@ type Config struct {
 	BindAddr           string   `toml:"bind_addr"`
 	CorsAllowedOrigins []string `toml:"cors_allowed_origins"`
 	CorsAllowedHeaders []string `toml:"cors_allowed_headers"`
-	CorsExposedHeaders []string `toml:"cors_allowed_headers"`
+	CorsExposedHeaders []string `toml:"cors_exposed_headers"`
 	BitCaskStoragePath string   `toml:"bitcask_storage_path"`
 	GCSchedule         string   `toml:"gc_schedule"`
 	ApiUrl             string   `toml:"registry_api_url"`
