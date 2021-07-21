@@ -12,6 +12,16 @@ import (
 
 var ErrApiStatusCode = errors.New("docker registry API returned error status")
 
+func HeadV2Manifest(manifestUrl string) (apiResp *http.Response, err error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("HEAD", manifestUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", schema2.MediaTypeManifest)
+	return client.Do(req)
+}
+
 func GetManifestData(manifestUrl string, manifestTypeHeader string) (manifestData []byte, apiResp *http.Response, err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", manifestUrl, nil)

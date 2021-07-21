@@ -60,6 +60,24 @@ func (rah *RegistryApiHandler) StatusHandler(w http.ResponseWriter, _ *http.Requ
 	_, _ = w.Write(res)
 }
 
+func (rah *RegistryApiHandler) ManifestSummaryHeadHandler(w http.ResponseWriter, r *http.Request) {
+	manifestUrl := *rah.ApiUrl
+	manifestPath := strings.TrimSuffix(r.URL.Path, "/summary")
+	manifestUrl.Path = path.Join(manifestUrl.Path, manifestPath)
+
+	res, err := manifest.HeadV2Manifest(manifestUrl.String())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if res.StatusCode != 200 {
+		http.Error(w, res.Status, res.StatusCode)
+	}
+	digest := res.Header.Get("Docker-Content-Digest")
+	w.Header().Set("Docker-Content-Digest", digest)
+	w.WriteHeader(http.StatusOK)
+}
+
 func (rah *RegistryApiHandler) ManifestSummaryHandler(w http.ResponseWriter, r *http.Request) {
 	manifestUrl := *rah.ApiUrl
 	manifestPath := strings.TrimSuffix(r.URL.Path, "/summary")

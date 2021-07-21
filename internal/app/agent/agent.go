@@ -144,7 +144,8 @@ func (a *Agent) configureRouter() error {
 	}
 	a.router.Use(func(next http.Handler) http.Handler { return handlers.CombinedLoggingHandler(os.Stdout, next) })
 	a.router.HandleFunc("/v2/status", registryApiHandler.StatusHandler)
-	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.ManifestSummaryHandler)
+	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.ManifestSummaryHandler).Methods("GET")
+	a.router.HandleFunc("/v2/{repo}/manifests/{tag}/summary", registryApiHandler.ManifestSummaryHeadHandler).Methods("HEAD")
 
 	a.router.HandleFunc("/v2/garbage", gch.GarbageGetHandler).Methods("GET")
 	a.router.HandleFunc("/v2/garbage", gch.GarbageDeleteHandler).Methods("DELETE")
