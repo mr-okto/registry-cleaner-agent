@@ -12,16 +12,24 @@ type Manager struct {
 
 func InitStatusManager(storagePath string) (*Manager, error) {
 	storage := NewStorage(storagePath)
+	err := storage.Open()
+	if err != nil {
+		return nil, err
+	}
 	status := NewStatus()
 	m := &Manager{
 		Storage: storage,
 		Status:  status,
 	}
-	err := m.restoreStatus()
+	err = m.restoreStatus()
 	if err != nil {
 		return nil, err
 	}
 	return m, nil
+}
+
+func (m *Manager) Shutdown() error {
+	return m.Storage.Close()
 }
 
 func (m *Manager) restoreStatus() error {
@@ -87,7 +95,7 @@ func (m *Manager) SetBlobsIndexedAt(blobsIndexedAt time.Time) error {
 }
 
 func (m *Manager) SetBlobsTotalSize(blobsTotalSize int64) error {
-	err := m.Storage.SetValue(KeyIndexedAt,
+	err := m.Storage.SetValue(KeyBlobsTotalSize,
 		[]byte(strconv.FormatInt(blobsTotalSize, 10)))
 	if err != nil {
 		return err

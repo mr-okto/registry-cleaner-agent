@@ -2,6 +2,7 @@ package garbage_collector
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"registry-cleaner-agent/internal/pkg/agent_errors"
 	"registry-cleaner-agent/internal/pkg/fs_analyzer"
@@ -27,6 +28,13 @@ func InitGCHandler(
 		StatusManager: stm,
 		FSAnalyzer:    fsa,
 	}, nil
+}
+
+func (gch *GCHandler) Cleanup() {
+	err := gch.StatusManager.Shutdown()
+	if err != nil {
+		log.Printf("[GCHandler] StatusManager.Shutdown error: %v", err)
+	}
 }
 
 func (gch *GCHandler) GarbageGetHandler(w http.ResponseWriter, _ *http.Request) {
@@ -80,6 +88,11 @@ func (gch *GCHandler) GarbageDeleteHandler(w http.ResponseWriter, _ *http.Reques
 		return
 	}
 	err = gch.StatusManager.SetUnusedBlobs(0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = gch.StatusManager.SetBlobsTotalSize(0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -26,7 +26,5 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("Launching agent at %s", config.BindAddr)
-	if err := agent.New(&config).Start(); err != nil {
-		log.Fatal(err)
-	}
+	agent.New(&config).Run()
 }
