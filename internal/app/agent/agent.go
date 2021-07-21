@@ -62,6 +62,8 @@ func (a *Agent) configureServer() {
 		AllowedOrigins:   a.config.CorsAllowedOrigins,
 		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
+		AllowedHeaders:   a.config.CorsAllowedHeaders,
+		ExposedHeaders:   a.config.CorsExposedHeaders,
 	})
 	corsHandler := c.Handler(a.router)
 	a.server = &http.Server{
