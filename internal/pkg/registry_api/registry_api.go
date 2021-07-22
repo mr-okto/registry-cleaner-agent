@@ -3,6 +3,7 @@ package registry_api
 import (
 	"encoding/json"
 	"github.com/tidwall/gjson"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -43,6 +44,7 @@ func (rah *RegistryApiHandler) ProxyHandler(w http.ResponseWriter, r *http.Reque
 func (rah *RegistryApiHandler) StatusHandler(w http.ResponseWriter, _ *http.Request) {
 	healthUrl, err := url.Parse(rah.ApiUrl.String())
 	if err != nil {
+		log.Printf("[ERROR at RegistryApiHandler.StatusHandler]: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -52,6 +54,7 @@ func (rah *RegistryApiHandler) StatusHandler(w http.ResponseWriter, _ *http.Requ
 	rah.StatusManager.Status.IsAlive = err == nil && resp.StatusCode == 200
 	res, err := json.Marshal(rah.StatusManager.Status)
 	if err != nil {
+		log.Printf("[ERROR at RegistryApiHandler.StatusHandler]: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -67,6 +70,7 @@ func (rah *RegistryApiHandler) ManifestSummaryHeadHandler(w http.ResponseWriter,
 
 	res, err := manifest.HeadV2Manifest(manifestUrl.String())
 	if err != nil {
+		log.Printf("[ERROR at RegistryApiHandler.ManifestSummaryHeadHandler]: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -89,6 +93,7 @@ func (rah *RegistryApiHandler) ManifestSummaryHandler(w http.ResponseWriter, r *
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR at RegistryApiHandler.ManifestSummaryHandler]: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -98,6 +103,7 @@ func (rah *RegistryApiHandler) ManifestSummaryHandler(w http.ResponseWriter, r *
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR at RegistryApiHandler.ManifestSummaryHandler]: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -106,7 +112,7 @@ func (rah *RegistryApiHandler) ManifestSummaryHandler(w http.ResponseWriter, r *
 	for _, layer := range v2Manifest.Layers {
 		imageSize += layer.Size
 	}
-	creationTime := time.RFC3339
+	creationTime := time.Unix(0, 0).Format(time.RFC3339)
 	if len(v1Manifest.History) != 0 {
 		value := gjson.Get(v1Manifest.History[0].V1Compatibility, "created")
 		creationTime = value.Str
@@ -123,6 +129,7 @@ func (rah *RegistryApiHandler) ManifestSummaryHandler(w http.ResponseWriter, r *
 
 	res, err := json.Marshal(&manifestSummary)
 	if err != nil {
+		log.Printf("[ERROR at RegistryApiHandler.ManifestSummaryHandler]: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

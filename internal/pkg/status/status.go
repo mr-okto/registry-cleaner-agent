@@ -17,8 +17,8 @@ func NewStatus() *Status {
 	return &Status{
 		IsAlive:        true,
 		UnusedBlobs:    0,
-		BlobsCleanedAt: time.RFC3339,
-		BlobsIndexedAt: time.RFC3339,
+		BlobsCleanedAt: time.Unix(0, 0).Format(time.RFC3339),
+		BlobsIndexedAt: time.Unix(0, 0).Format(time.RFC3339),
 		BlobsTotalSize: 0,
 	}
 }

@@ -46,19 +46,25 @@ func (gc *GarbageCollector) ListGarbageBlobs() ([]string, error) {
 		return nil, ErrAlreadyRunning
 	}
 	defer gc.sem.Release(1)
-	out, err := exec.Command("docker", "exec", gc.ContainerName,
-		RegistryBin, GcCommand, DeleteUntagged, DryRun, gc.RegistryConfigPath).Output()
+	cmd := exec.Command("docker", "exec", gc.ContainerName,
+		RegistryBin, GcCommand, DeleteUntagged, DryRun, gc.RegistryConfigPath)
+	var out, stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
 	if err != nil {
-		return nil, err
+		logErr := fmt.Errorf("docker garbage-collect failed: %v; srderr: %s", err, stderr.String())
+		log.Printf("[ERROR at GarbageCollector.ListGarbageBlobs]: %v", logErr)
+		return nil, logErr
 	}
-	sc := bufio.NewScanner(bytes.NewReader(out))
+	sc := bufio.NewScanner(bytes.NewReader(out.Bytes()))
 	var blobs []string
 	for sc.Scan() {
 		line := sc.Text()
 		if strings.HasPrefix(line, EligibleForDeletion) {
 			blobs = append(blobs, strings.TrimPrefix(line, EligibleForDeletion))
 		} else if strings.HasSuffix(line, StatSuffix) {
-			log.Printf("Garbage collector dry run: %s\n", line)
+			log.Printf("[INFO at GarbageCollector.ListGarbageBlobs] garbage collector dry run results: %s\n", line)
 		}
 	}
 	return blobs, nil
@@ -68,25 +74,35 @@ func (gc *GarbageCollector) RemoveGarbageBlobs() error {
 	if !gc.sem.TryAcquire(1) {
 		return ErrAlreadyRunning
 	}
-	out, err := exec.Command("docker", "exec", gc.ContainerName,
-		RegistryBin, GcCommand, DeleteUntagged, gc.RegistryConfigPath).Output()
+	cmd := exec.Command("docker", "exec", gc.ContainerName,
+		RegistryBin, GcCommand, DeleteUntagged, gc.RegistryConfigPath)
+	var out, stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("docker exec returned non-zero exit code: %s", err.Error())
+		logErr := fmt.Errorf("docker garbage-collect failed: %v; srderr: %s", err, stderr.String())
+		log.Printf("[ERROR at GarbageCollector.RemoveGarbageBlobs]: %v", logErr)
+		return logErr
 	}
 	go func() {
-		err = exec.Command("docker", "restart", gc.ContainerName).Run()
+		cmd = exec.Command("docker", "restart", gc.ContainerName)
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
+		err := cmd.Run()
 		if err != nil {
-			log.Printf("docker restart returned non-zero exit code: %s", err.Error())
+			log.Printf("[ERROR at GarbageCollector.RemoveGarbageBlobs]: docker restart failed: %v; srderr: %s",
+				err, stderr.String())
 		}
 		gc.sem.Release(1)
 	}()
-	sc := bufio.NewScanner(bytes.NewReader(out))
+	sc := bufio.NewScanner(bytes.NewReader(out.Bytes()))
 	for sc.Scan() {
 		line := sc.Text()
 		if strings.HasPrefix(line, TimePrefix) {
 			log.Println(line[strings.Index(line, LogPrefix):])
 		} else if strings.HasSuffix(line, StatSuffix) {
-			log.Printf("Garbage collector run: %s\n", line)
+			log.Printf("[INFO at GarbageCollector.RemoveGarbageBlobs] garbage collector run results %s\n", line)
 		}
 	}
 	return nil
