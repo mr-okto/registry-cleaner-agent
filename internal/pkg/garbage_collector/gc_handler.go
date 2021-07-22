@@ -1,6 +1,7 @@
 package garbage_collector
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -30,15 +31,23 @@ func InitGCHandler(
 	}, nil
 }
 
-func (gch *GCHandler) Cleanup() {
+func (gch *GCHandler) Cleanup(ctx context.Context) {
 	err := gch.StatusManager.Shutdown()
 	if err != nil {
 		log.Printf("[GCHandler] StatusManager.Shutdown error: %v", err)
+	}
+	err = gch.Gc.Shutdown(ctx)
+	if err != nil {
+		log.Printf("[GCHandler] GC.Shutdown error: %v", err)
 	}
 }
 
 func (gch *GCHandler) GarbageGetHandler(w http.ResponseWriter, _ *http.Request) {
 	blobs, err := gch.Gc.ListGarbageBlobs()
+	if err != nil && err == ErrAlreadyRunning {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -83,6 +92,10 @@ func (gch *GCHandler) GarbageGetHandler(w http.ResponseWriter, _ *http.Request) 
 func (gch *GCHandler) GarbageDeleteHandler(w http.ResponseWriter, _ *http.Request) {
 	currentTime := time.Now()
 	err := gch.Gc.RemoveGarbageBlobs()
+	if err != nil && err == ErrAlreadyRunning {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

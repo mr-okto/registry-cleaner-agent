@@ -17,4 +17,5 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/rs/cors v1.8.0
 	github.com/tidwall/gjson v1.8.1
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )

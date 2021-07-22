@@ -3,10 +3,12 @@ package garbage_collector
 import (
 	"bufio"
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
+	"golang.org/x/sync/semaphore"
 	"log"
 	"os/exec"
-
 	"strings"
 )
 
@@ -24,16 +26,26 @@ const (
 type GarbageCollector struct {
 	ContainerName      string
 	RegistryConfigPath string
+	sem                *semaphore.Weighted
 }
+
+var (
+	ErrAlreadyRunning = errors.New("garbage collector already running")
+)
 
 func NewGarbageCollector(containerName string, registryConfigPath string) *GarbageCollector {
 	return &GarbageCollector{
 		ContainerName:      containerName,
 		RegistryConfigPath: registryConfigPath,
+		sem:                semaphore.NewWeighted(int64(1)),
 	}
 }
 
 func (gc *GarbageCollector) ListGarbageBlobs() ([]string, error) {
+	if !gc.sem.TryAcquire(1) {
+		return nil, ErrAlreadyRunning
+	}
+	defer gc.sem.Release(1)
 	out, err := exec.Command("docker", "exec", gc.ContainerName,
 		RegistryBin, GcCommand, DeleteUntagged, DryRun, gc.RegistryConfigPath).Output()
 	if err != nil {
@@ -53,15 +65,21 @@ func (gc *GarbageCollector) ListGarbageBlobs() ([]string, error) {
 }
 
 func (gc *GarbageCollector) RemoveGarbageBlobs() error {
+	if !gc.sem.TryAcquire(1) {
+		return ErrAlreadyRunning
+	}
 	out, err := exec.Command("docker", "exec", gc.ContainerName,
 		RegistryBin, GcCommand, DeleteUntagged, gc.RegistryConfigPath).Output()
 	if err != nil {
 		return fmt.Errorf("docker exec returned non-zero exit code: %s", err.Error())
 	}
-	err = exec.Command("docker", "restart", gc.ContainerName).Run()
-	if err != nil {
-		return fmt.Errorf("docker restart returned non-zero exit code: %s", err.Error())
-	}
+	go func() {
+		err = exec.Command("docker", "restart", gc.ContainerName).Run()
+		if err != nil {
+			log.Printf("docker restart returned non-zero exit code: %s", err.Error())
+		}
+		gc.sem.Release(1)
+	}()
 	sc := bufio.NewScanner(bytes.NewReader(out))
 	for sc.Scan() {
 		line := sc.Text()
@@ -72,4 +90,8 @@ func (gc *GarbageCollector) RemoveGarbageBlobs() error {
 		}
 	}
 	return nil
+}
+
+func (gc *GarbageCollector) Shutdown(ctx context.Context) error {
+	return gc.sem.Acquire(ctx, 1)
 }
