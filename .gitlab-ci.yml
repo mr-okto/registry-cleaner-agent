@@ -8,7 +8,7 @@ build:
     - go build -o build/agent -v ./cmd
     - sudo sed -i '7s/5555/5000/' /home/download/qoollo-registry-cleaner-agent/config/agent.toml
     - sudo systemctl restart agent-registry
-    - sudo chown -R gitlab-runner:gitlab-runner /home/download/
+    - sudo chown -R gitlab-runner:gitlab-runner /home/download/qoollo-registry-cleaner-agent/
     - echo "Готово"
   only:
     - dev
