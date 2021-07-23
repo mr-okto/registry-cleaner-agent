@@ -68,16 +68,20 @@ func (rah *RegistryApiHandler) ManifestSummaryHeadHandler(w http.ResponseWriter,
 	manifestPath := strings.TrimSuffix(r.URL.Path, "/summary")
 	manifestUrl.Path = path.Join(manifestUrl.Path, manifestPath)
 
-	res, err := manifest.HeadV2Manifest(manifestUrl.String())
-	if err != nil {
-		log.Printf("[ERROR at RegistryApiHandler.ManifestSummaryHeadHandler]: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	resChan := make(chan manifest.Result)
+	go manifest.HeadManifest(manifestUrl.String(), resChan)
+	res := <-resChan
+	close(resChan)
+
+	if res.Err != nil {
+		log.Printf("[ERROR at RegistryApiHandler.ManifestSummaryHeadHandler]: %v", res.Err)
+		http.Error(w, res.Err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if res.StatusCode != 200 {
-		http.Error(w, res.Status, res.StatusCode)
+	if res.ApiResp.StatusCode != 200 {
+		http.Error(w, res.ApiResp.Status, res.ApiResp.StatusCode)
 	}
-	digest := res.Header.Get("Docker-Content-Digest")
+	digest := res.ApiResp.Header.Get("Docker-Content-Digest")
 	w.Header().Set("Docker-Content-Digest", digest)
 	w.WriteHeader(http.StatusOK)
 }
@@ -87,26 +91,28 @@ func (rah *RegistryApiHandler) ManifestSummaryHandler(w http.ResponseWriter, r *
 	manifestPath := strings.TrimSuffix(r.URL.Path, "/summary")
 	manifestUrl.Path = path.Join(manifestUrl.Path, manifestPath)
 
-	v1Manifest, v1ApiResp, err := manifest.GetV1Manifest(manifestUrl.String())
-	if err == manifest.ErrApiStatusCode && v1ApiResp != nil {
-		http.Error(w, v1ApiResp.Status, v1ApiResp.StatusCode)
-		return
+	v1chan := make(chan manifest.Result)
+	go manifest.GetV1Manifest(manifestUrl.String(), v1chan)
+	v2chan := make(chan manifest.Result)
+	go manifest.GetV2Manifest(manifestUrl.String(), v2chan)
+	var results [2]manifest.Result
+	results[0] = <-v1chan
+	results[1] = <-v2chan
+	close(v1chan)
+	close(v2chan)
+	for _, res := range results {
+		if res.Err == manifest.ErrApiStatusCode && res.ApiResp != nil {
+			http.Error(w, res.ApiResp.Status, res.ApiResp.StatusCode)
+			return
+		}
+		if res.Err != nil {
+			log.Printf("[ERROR at RegistryApiHandler.ManifestSummaryHandler]: %v", res.Err)
+			http.Error(w, res.Err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-	if err != nil {
-		log.Printf("[ERROR at RegistryApiHandler.ManifestSummaryHandler]: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	v2Manifest, v2ApiResp, err := manifest.GetV2Manifest(manifestUrl.String())
-	if err == manifest.ErrApiStatusCode && v2ApiResp != nil {
-		http.Error(w, v2ApiResp.Status, v2ApiResp.StatusCode)
-		return
-	}
-	if err != nil {
-		log.Printf("[ERROR at RegistryApiHandler.ManifestSummaryHandler]: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	v1Manifest, v2Manifest := results[0].V1Manifest, results[1].V2Manifest
+	v2ApiResp := results[1].ApiResp
 
 	imageSize := v2Manifest.Config.Size
 	for _, layer := range v2Manifest.Layers {

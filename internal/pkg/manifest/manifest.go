@@ -12,17 +12,26 @@ import (
 
 var ErrApiStatusCode = errors.New("docker registry API returned error status")
 
-func HeadV2Manifest(manifestUrl string) (apiResp *http.Response, err error) {
+type Result struct {
+	V1Manifest *schema1.Manifest
+	V2Manifest *schema2.Manifest
+	ApiResp    *http.Response
+	Err        error
+}
+
+func HeadManifest(manifestUrl string, result chan<- Result) {
 	client := &http.Client{}
 	req, err := http.NewRequest("HEAD", manifestUrl, nil)
 	if err != nil {
-		return nil, err
+		result <- Result{Err: err}
+		return
 	}
 	req.Header.Set("Accept", schema2.MediaTypeManifest)
-	return client.Do(req)
+	resp, err := client.Do(req)
+	result <- Result{ApiResp: resp, Err: err}
 }
 
-func GetManifestData(manifestUrl string, manifestTypeHeader string) (manifestData []byte, apiResp *http.Response, err error) {
+func getManifestData(manifestUrl string, manifestTypeHeader string) (manifestData []byte, apiResp *http.Response, err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", manifestUrl, nil)
 	if err != nil {
@@ -46,22 +55,26 @@ func GetManifestData(manifestUrl string, manifestTypeHeader string) (manifestDat
 	return jsonManifestData, apiResp, err
 }
 
-func GetV1Manifest(manifestUrl string) (manifest *schema1.Manifest, apiResp *http.Response, err error) {
-	jsonManifestData, apiResp, err := GetManifestData(manifestUrl, schema1.MediaTypeManifest)
+func GetV1Manifest(manifestUrl string, result chan<- Result) {
+	jsonManifestData, apiResp, err := getManifestData(manifestUrl, schema1.MediaTypeManifest)
 	if err != nil {
-		return nil, apiResp, err
+		result <- Result{ApiResp: apiResp, Err: err}
+		return
 	}
-	manifest = &schema1.Manifest{}
+	manifest := &schema1.Manifest{}
 	err = json.Unmarshal(jsonManifestData, manifest)
-	return manifest, apiResp, err
+	result <- Result{V1Manifest: manifest, ApiResp: apiResp, Err: err}
+	return
 }
 
-func GetV2Manifest(manifestUrl string) (manifest *schema2.Manifest, apiResp *http.Response, err error) {
-	jsonManifestData, apiResp, err := GetManifestData(manifestUrl, schema2.MediaTypeManifest)
+func GetV2Manifest(manifestUrl string, result chan<- Result) {
+	jsonManifestData, apiResp, err := getManifestData(manifestUrl, schema2.MediaTypeManifest)
 	if err != nil {
-		return nil, nil, err
+		result <- Result{ApiResp: apiResp, Err: err}
+		return
 	}
-	manifest = &schema2.Manifest{}
+	manifest := &schema2.Manifest{}
 	err = json.Unmarshal(jsonManifestData, manifest)
-	return manifest, apiResp, err
+	result <- Result{V2Manifest: manifest, ApiResp: apiResp, Err: err}
+	return
 }
