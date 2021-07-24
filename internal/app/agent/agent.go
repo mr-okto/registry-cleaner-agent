@@ -132,8 +132,8 @@ func (a *Agent) initHandlers() (*registry_api.RegistryApiHandler, *garbage_colle
 	if err != nil {
 		return nil, nil, err
 	}
-
-	return rah, gch, nil
+	err = gch.EnableCron(a.config.GCIndexSchedule, a.config.GCRemovalSchedule)
+	return rah, gch, err
 }
 
 func (a *Agent) configureRouter() error {

@@ -1,6 +1,7 @@
 package status
 
 import (
+	"log"
 	"strconv"
 	"time"
 )
@@ -102,4 +103,24 @@ func (m *Manager) SetBlobsTotalSize(blobsTotalSize int64) error {
 	}
 	m.Status.BlobsTotalSize = blobsTotalSize
 	return nil
+}
+
+func (m *Manager) UpdateStatus(update *Update) error {
+	var err error = nil
+	if update.UnusedBlobs != nil {
+		err = m.SetUnusedBlobs(*update.UnusedBlobs)
+	}
+	if err == nil && update.BlobsTotalSize != nil {
+		err = m.SetBlobsTotalSize(*update.BlobsTotalSize)
+	}
+	if err == nil && update.BlobsIndexedAt != nil {
+		err = m.SetBlobsIndexedAt(*update.BlobsIndexedAt)
+	}
+	if err == nil && update.BlobsCleanedAt != nil {
+		err = m.SetBlobsCleanedAt(*update.BlobsCleanedAt)
+	}
+	if err != nil {
+		log.Printf("[ERROR at status.Manager.UpdateStatus]: %v", err)
+	}
+	return err
 }

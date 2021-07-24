@@ -1,6 +1,7 @@
 package fs_analyzer
 
 import (
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -38,13 +39,17 @@ func (a *Analyzer) GetBlobSize(digest string) (int64, error) {
 func (a *Analyzer) GetBlobsSize(digests []string) (sizes []int64, total int64, err error) {
 	sizes = make([]int64, len(digests))
 	total = 0
+	var size int64
 	for i, digest := range digests {
-		size, err := a.GetBlobSize(digest)
+		size, err = a.GetBlobSize(digest)
 		if err != nil {
-			return nil, 0, err
+			break
 		}
 		sizes[i] = size
 		total += size
 	}
-	return sizes, total, nil
+	if err != nil {
+		log.Printf("[ERROR at FSAnalyzer.GetBlobsSize]: %v", err)
+	}
+	return sizes, total, err
 }

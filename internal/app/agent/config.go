@@ -6,7 +6,8 @@ type Config struct {
 	CorsAllowedHeaders []string `toml:"cors_allowed_headers"`
 	CorsExposedHeaders []string `toml:"cors_exposed_headers"`
 	BitCaskStoragePath string   `toml:"bitcask_storage_path"`
-	GCSchedule         string   `toml:"gc_schedule"`
+	GCIndexSchedule    string   `toml:"gc_index_schedule"`
+	GCRemovalSchedule  string   `toml:"gc_removal_schedule"`
 	ApiUrl             string   `toml:"registry_api_url"`
 	ContainerName      string   `toml:"registry_container_name"`
 	RegistryMountPoint string   `toml:"registry_mount_point"`

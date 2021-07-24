@@ -41,10 +41,22 @@ func NewGarbageCollector(containerName string, registryConfigPath string) *Garba
 	}
 }
 
-func (gc *GarbageCollector) ListGarbageBlobs() ([]string, error) {
+func (gc *GarbageCollector) TryListGarbageBlobs() ([]string, error) {
 	if !gc.sem.TryAcquire(1) {
 		return nil, ErrAlreadyRunning
 	}
+	return gc.listGarbageBlobs()
+}
+
+func (gc *GarbageCollector) ListGarbageBlobs() ([]string, error) {
+	err := gc.sem.Acquire(context.Background(), 1)
+	if err != nil {
+		return nil, err
+	}
+	return gc.listGarbageBlobs()
+}
+
+func (gc *GarbageCollector) listGarbageBlobs() ([]string, error) {
 	defer gc.sem.Release(1)
 	cmd := exec.Command("docker", "exec", gc.ContainerName,
 		RegistryBin, GcCommand, DeleteUntagged, DryRun, gc.RegistryConfigPath)
@@ -54,7 +66,7 @@ func (gc *GarbageCollector) ListGarbageBlobs() ([]string, error) {
 	err := cmd.Run()
 	if err != nil {
 		logErr := fmt.Errorf("docker garbage-collect failed: %v; srderr: %s", err, stderr.String())
-		log.Printf("[ERROR at GarbageCollector.ListGarbageBlobs]: %v", logErr)
+		log.Printf("[ERROR at GarbageCollector.listGarbageBlobs]: %v", logErr)
 		return nil, logErr
 	}
 	sc := bufio.NewScanner(bytes.NewReader(out.Bytes()))
@@ -64,16 +76,28 @@ func (gc *GarbageCollector) ListGarbageBlobs() ([]string, error) {
 		if strings.HasPrefix(line, EligibleForDeletion) {
 			blobs = append(blobs, strings.TrimPrefix(line, EligibleForDeletion))
 		} else if strings.HasSuffix(line, StatSuffix) {
-			log.Printf("[INFO at GarbageCollector.ListGarbageBlobs] garbage collector dry run results: %s\n", line)
+			log.Printf("[INFO at GarbageCollector.listGarbageBlobs] garbage collector dry run results: %s\n", line)
 		}
 	}
 	return blobs, nil
 }
 
-func (gc *GarbageCollector) RemoveGarbageBlobs() error {
+func (gc *GarbageCollector) TryRemoveGarbageBlobs() error {
 	if !gc.sem.TryAcquire(1) {
 		return ErrAlreadyRunning
 	}
+	return gc.removeGarbageBlobs()
+}
+
+func (gc *GarbageCollector) RemoveGarbageBlobs() error {
+	err := gc.sem.Acquire(context.Background(), 1)
+	if err != nil {
+		return err
+	}
+	return gc.removeGarbageBlobs()
+}
+
+func (gc *GarbageCollector) removeGarbageBlobs() error {
 	cmd := exec.Command("docker", "exec", gc.ContainerName,
 		RegistryBin, GcCommand, DeleteUntagged, gc.RegistryConfigPath)
 	var out, stderr bytes.Buffer
@@ -82,7 +106,7 @@ func (gc *GarbageCollector) RemoveGarbageBlobs() error {
 	err := cmd.Run()
 	if err != nil {
 		logErr := fmt.Errorf("docker garbage-collect failed: %v; srderr: %s", err, stderr.String())
-		log.Printf("[ERROR at GarbageCollector.RemoveGarbageBlobs]: %v", logErr)
+		log.Printf("[ERROR at GarbageCollector.TryRemoveGarbageBlobs]: %v", logErr)
 		return logErr
 	}
 	go func() {
@@ -91,7 +115,7 @@ func (gc *GarbageCollector) RemoveGarbageBlobs() error {
 		cmd.Stderr = &stderr
 		err := cmd.Run()
 		if err != nil {
-			log.Printf("[ERROR at GarbageCollector.RemoveGarbageBlobs]: docker restart failed: %v; srderr: %s",
+			log.Printf("[ERROR at GarbageCollector.TryRemoveGarbageBlobs]: docker restart failed: %v; srderr: %s",
 				err, stderr.String())
 		}
 		gc.sem.Release(1)
@@ -102,7 +126,7 @@ func (gc *GarbageCollector) RemoveGarbageBlobs() error {
 		if strings.HasPrefix(line, TimePrefix) {
 			log.Println(line[strings.Index(line, LogPrefix):])
 		} else if strings.HasSuffix(line, StatSuffix) {
-			log.Printf("[INFO at GarbageCollector.RemoveGarbageBlobs] garbage collector run results %s\n", line)
+			log.Printf("[INFO at GarbageCollector.TryRemoveGarbageBlobs] garbage collector run results %s\n", line)
 		}
 	}
 	return nil
