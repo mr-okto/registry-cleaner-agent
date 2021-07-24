@@ -1,11 +1,16 @@
+# Agent port (mathes port in agent.Dockerfile and docker-compose.yml)
 bind_addr = ":3000"
+# Directory used to store agent status information
+bitcask_storage_path = "/app/data/bitcask-storage"
+# CORS rules
 cors_allowed_origins = [ "*" ]
 cors_allowed_headers = ["Accept", "Content-Type", "Content-Length", "Accept-Encoding", "Docker-Content-Digest", "Etag"]
 cors_exposed_headers = [ "*" ]
-bitcask_storage_path = "bitcask-storage"
+# Cron to index and remove garbage blobs
 gc_index_schedule = "0 */15 * ? * *"
 gc_removal_schedule = "0 0 3 * * ?"
-registry_api_url = "http://localhost:5000"
-registry_container_name = "registry"
-registry_mount_point = "/mnt/registry"
-registry_config_path = "/etc/docker/registry/config.yml"
+# Registry API endpoint
+registry_api_url = "http://registry:5000"
+registry_container_name = "registry-cleaner-registry"
+registry_mount_point = "/app/data/registry" # /var/lib/registry mounting point
+registry_config_path = "/etc/docker/registry/config.yml" # config path inside registry container

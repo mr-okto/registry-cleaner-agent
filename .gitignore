@@ -22,4 +22,4 @@ build/*
 .ide
 
 #Local storage path
-bitcask-storage
+data

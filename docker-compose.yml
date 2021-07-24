@@ -1,0 +1,26 @@
+version: '3.3'
+
+services:
+  registry:
+    restart: unless-stopped
+    image: registry:latest
+    container_name: registry-cleaner-registry
+    ports:
+      - 5000:5000
+    volumes:
+      - ./config/registry.yml:/etc/docker/registry/config.yml:ro
+      - ./data/registry:/var/lib/registry:rw
+  agent:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./agent.Dockerfile
+    container_name: registry-cleaner-agent
+    privileged: true
+    working_dir: /app
+    ports:
+      - 3000:3000
+    volumes:
+      - ./config/agent.toml:/app/config/agent.toml:ro
+      - ./data:/app/data:rw
+      - /var/run/docker.sock:/var/run/docker.sock
