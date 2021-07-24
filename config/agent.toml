@@ -1,7 +1,7 @@
-# Agent port (mathes port in agent.Dockerfile and docker-compose.yml)
+# Agent port (mathes exposed port in agent.Dockerfile and docker-compose.yml)
 bind_addr = ":3000"
 # Directory used to store agent status information
-bitcask_storage_path = "/app/data/bitcask-storage"
+bitcask_storage_path = "/app/data/agent"
 # CORS rules
 cors_allowed_origins = [ "*" ]
 cors_allowed_headers = ["Accept", "Content-Type", "Content-Length", "Accept-Encoding", "Docker-Content-Digest", "Etag"]
