@@ -25,6 +25,7 @@ const (
 
 type GarbageCollector struct {
 	ContainerName      string
+	ROContainerName    string
 	RegistryConfigPath string
 	sem                *semaphore.Weighted
 }
@@ -33,9 +34,10 @@ var (
 	ErrAlreadyRunning = errors.New("garbage collector already running")
 )
 
-func NewGarbageCollector(containerName string, registryConfigPath string) *GarbageCollector {
+func NewGarbageCollector(containerName, roContainerName, registryConfigPath string) *GarbageCollector {
 	return &GarbageCollector{
 		ContainerName:      containerName,
+		ROContainerName:    roContainerName,
 		RegistryConfigPath: registryConfigPath,
 		sem:                semaphore.NewWeighted(int64(1)),
 	}
@@ -97,29 +99,57 @@ func (gc *GarbageCollector) RemoveGarbageBlobs() error {
 	return gc.removeGarbageBlobs()
 }
 
+func (gc *GarbageCollector) swapContainers(startRO bool) error {
+	toStart := gc.ContainerName
+	toStop := gc.ROContainerName
+	if startRO {
+		toStart = gc.ROContainerName
+		toStop = gc.ContainerName
+	}
+	cmd := exec.Command("docker", "stop", toStop)
+	var stopErr bytes.Buffer
+	cmd.Stderr = &stopErr
+	log.Printf("[INFO at GarbageCollector.swapContainers]: stopping container %s", toStop)
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("[ERROR at GarbageCollector.swapContainers]: docker stop %s failed: %v; srderr: %s",
+			toStop, err, stopErr.String())
+		return err
+	}
+	cmd = exec.Command("docker", "start", toStart)
+	var startErr bytes.Buffer
+	cmd.Stderr = &startErr
+	log.Printf("[INFO at GarbageCollector.swapContainers]: starting container %s", toStart)
+	err = cmd.Run()
+	if err != nil {
+		log.Printf("[ERROR at GarbageCollector.swapContainers]: docker start %s failed: %v; srderr: %s",
+			toStart, err, startErr.String())
+		return err
+	}
+	return nil
+}
+
 func (gc *GarbageCollector) removeGarbageBlobs() error {
-	cmd := exec.Command("docker", "exec", gc.ContainerName,
+	err := gc.swapContainers(true)
+	if err != nil {
+		gc.sem.Release(1)
+		return err
+	}
+	cmd := exec.Command("docker", "exec", gc.ROContainerName,
 		RegistryBin, GcCommand, DeleteUntagged, gc.RegistryConfigPath)
 	var out, stderr bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
-	err := cmd.Run()
+	err = cmd.Run()
+	go func() {
+		_ = gc.swapContainers(false)
+		gc.sem.Release(1)
+	}()
 	if err != nil {
 		logErr := fmt.Errorf("docker garbage-collect failed: %v; srderr: %s", err, stderr.String())
 		log.Printf("[ERROR at GarbageCollector.TryRemoveGarbageBlobs]: %v", logErr)
 		return logErr
 	}
-	go func() {
-		cmd = exec.Command("docker", "restart", gc.ContainerName)
-		var stderr bytes.Buffer
-		cmd.Stderr = &stderr
-		err := cmd.Run()
-		if err != nil {
-			log.Printf("[ERROR at GarbageCollector.TryRemoveGarbageBlobs]: docker restart failed: %v; srderr: %s",
-				err, stderr.String())
-		}
-		gc.sem.Release(1)
-	}()
 	sc := bufio.NewScanner(bytes.NewReader(out.Bytes()))
 	for sc.Scan() {
 		line := sc.Text()

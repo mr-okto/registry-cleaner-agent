@@ -126,7 +126,7 @@ func (a *Agent) initHandlers() (*registry_api.RegistryApiHandler, *garbage_colle
 		return nil, nil, err
 	}
 	gc := garbage_collector.NewGarbageCollector(
-		a.config.ContainerName, a.config.RegistryConfig)
+		a.config.ContainerName, a.config.ReadonlyContainerName, a.config.RegistryConfig)
 	fsa := fs_analyzer.NewFSAnalyzer(a.config.RegistryMountPoint)
 	gch, err := garbage_collector.InitGCHandler(gc, stm, fsa)
 	if err != nil {
