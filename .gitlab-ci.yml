@@ -6,9 +6,11 @@ variables:
 build:
   stage: build
   script:
+    - sudo cp -pr /home/download/qoollo-registry-cleaner-agent/data/ /home/backup/agent/
     - sudo docker-compose --profile tools up --no-start
     - sudo docker-compose up -d
     - sudo chown -R gitlab-runner:gitlab-runner /home/download/qoollo-registry-cleaner-agent/
+    - sudo cp -pr  /home/backup/agent/data/ /home/download/qoollo-registry-cleaner-agent/
     - echo "Готово"
   only:
     - dev
