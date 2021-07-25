@@ -2,6 +2,7 @@ stages:
   - build
 variables:
   GIT_CLONE_PATH: '$CI_BUILDS_DIR/$CI_PROJECT_NAME'
+  GIT_CLEAN_FLAGS: -f -e data/**
 build:
   stage: build
   script:
