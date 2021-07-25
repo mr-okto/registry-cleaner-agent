@@ -7,8 +7,8 @@ cors_allowed_origins = [ "*" ]
 cors_allowed_headers = ["Accept", "Content-Type", "Content-Length", "Accept-Encoding", "Docker-Content-Digest", "Etag"]
 cors_exposed_headers = [ "*" ]
 # Cron to index and remove garbage blobs
-gc_index_schedule = "0 */15 * ? * *" #Eac
-gc_removal_schedule = "0 0 3 * * ?"
+gc_index_schedule = "0 */15 * ? * *"  # Each 15 minutes
+gc_removal_schedule = "0 0 3 * * ?"   # Daily at 03:00
 # Registry API endpoint
 registry_api_url = "http://registry:5000"
 registry_container_name = "registry-cleaner-registry"
