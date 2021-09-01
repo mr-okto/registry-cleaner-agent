@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+  registry:
+    restart: unless-stopped
+    image: registry:latest
+    container_name: registry-cleaner-registry
+    profiles:
+      - launch
+    expose:
+      - 5000
+    ports:
+      - ${REGISTRY_PORT}:5000
+    volumes:
+      - ${REGISTRY_CONFIG}:/etc/docker/registry/config.yml:ro
+      - ${REGISTRY_DATA_STORAGE}:/var/lib/registry:rw
+  registry-readonly:
+    restart: unless-stopped
+    image: registry:latest
+    container_name: registry-cleaner-registry-readonly
+    environment:
+      REGISTRY_STORAGE_MAINTENANCE: |-
+        uploadpurging:
+            enabled: false
+        readonly:
+            enabled: true
+    profiles:
+      - tools # exclude service from launch on docker-compose up
+    expose:
+      - 5000
+    ports:
+      - ${REGISTRY_PORT}:5000
+    volumes:
+      - ${REGISTRY_CONFIG}:/etc/docker/registry/config.yml:ro
+      - ${REGISTRY_DATA_STORAGE}:/var/lib/registry:rw
+  agent:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./agent.Dockerfile
+    container_name: registry-cleaner-agent
+    privileged: true
+    working_dir: /app
+    depends_on:
+      - registry
+    profiles:
+      - launch
+    ports:
+      - ${AGENT_PORT}:3000
+    volumes:
+      - ${AGENT_CONFIG}:/app/config/agent.toml:ro
+      - ${AGENT_DATA_STORAGE}:/app/data/agent:rw
+      - ${REGISTRY_DATA_STORAGE}:/app/data/registry:rw
+      - /var/run/docker.sock:/var/run/docker.sock

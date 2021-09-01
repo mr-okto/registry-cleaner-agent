@@ -1,0 +1,17 @@
+# Agent port (mathes exposed port in agent.Dockerfile and docker-compose.yml)
+bind_addr = ":3000"
+# Directory used to store agent status information
+bitcask_storage_path = "/app/data/agent"
+# CORS rules
+cors_allowed_origins = [ "*" ]
+cors_allowed_headers = ["Accept", "Content-Type", "Content-Length", "Accept-Encoding", "Docker-Content-Digest", "Etag"]
+cors_exposed_headers = [ "*" ]
+# Cron to index and remove garbage blobs
+gc_index_schedule = "0 */15 * ? * *"  # Each 15 minutes
+gc_removal_schedule = "0 0 3 * * ?"   # Daily at 03:00
+# Registry API endpoint
+registry_api_url = "http://registry:5000"
+registry_container_name = "registry-cleaner-registry"
+registry_readonly_container_name = "registry-cleaner-registry-readonly"
+registry_mount_point = "/app/data/registry" # /var/lib/registry mounting point
+registry_config_path = "/etc/docker/registry/config.yml" # config path inside registry container
