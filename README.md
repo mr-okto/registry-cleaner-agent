@@ -20,12 +20,11 @@ https://docs.docker.com/registry/spec/api/
 
 Additional routes:
 
-`GET /v2/status - healthcheck  
-GET /v2/garbage - index garbage blobs  
-GET /v2/<name>/manifests/<tag>/digest - get image digest  
-DELETE /v2/<name>/manifests/<digest> - remove image manifest  
-DELETE /v2/garbage - run garbage collector`
-
+`GET /v2/status` - healthcheck  
+`GET /v2/garbage` - index garbage blobs    
+`GET /v2/<name>/manifests/<tag>/digest` - get image digest   
+`DELETE /v2/<name>/manifests/<digest>` - remove image manifest   
+`DELETE /v2/garbage` - run garbage collector  
 
 
 Garbage removal is launched automatically using CRON schedule (config/agent.toml).
